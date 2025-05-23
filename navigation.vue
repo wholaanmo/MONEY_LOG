@@ -93,7 +93,7 @@ header {
   transition: .5s ease all;
   height: 100px;
   margin-left: -10px;
-  margin-top: -10px;
+  margin-top: -15px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -168,7 +168,7 @@ img {
   width: 90px;
   height: auto;
   transition: .5s ease all;
-  margin-top: -10px;
+  margin-top: 4px;
   margin-left: -10px;
 }
 }
