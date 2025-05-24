@@ -302,6 +302,18 @@ router.post('/groups/:groupId/contributions', groupAuth('member'), async (req, r
       return res.status(403).json({ success: 0, message: 'User is not a member of this group' });
     }
 
+    const [expenses] = await pool.query(
+      'SELECT 1 FROM group_expenses WHERE group_id = ? LIMIT 1',
+      [groupId]
+    );
+
+    if (!expenses.length) {
+      return res.status(400).json({ 
+        success: 0, 
+        message: 'Cannot add contributions - group has no expenses yet' 
+      });
+    }
+
     await pool.query('START TRANSACTION');
 
     const [result] = await pool.query(
