@@ -331,6 +331,9 @@
       <div class="photo-wrapper">
         <img :src="photo.image_url" :alt="photo.description || 'Group photo'" @click="openPhotoModal(photo)" class="photo-thumbnail" @error="handleImageError">
         <div class="photo-actions">
+          <button @click.stop="startEditPhoto(photo)" class="edit-photo-btn" v-if="canDeletePhoto(photo)">
+        <i class="fas fa-edit"></i>
+      </button>
           <button @click.stop="confirmDeletePhoto(photo)" class="delete-photo-btn" v-if="canDeletePhoto(photo)">
             <i class="fas fa-trash"></i>
           </button>
@@ -384,6 +387,52 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<div v-if="editingPhoto" class="modal-overlay7">
+  <div class="modal-content7 photo-edit-modal">
+    <div class="modal-header7">
+      <h3>{{ updateSuccess ? 'Update Complete' : 'Edit Photo' }}</h3>
+      <button @click="cancelEditPhoto" class="close-button7">&times;</button>
+    </div>
+    <div class="modal-body7">
+      <form @submit.prevent="updatePhoto" v-if="!updateSuccess">
+        <div class="form-group7">
+          <label>Photo Description</label>
+          <textarea v-model="editPhotoDescription" placeholder="Update description"></textarea>
+        </div>
+        
+        <div class="form-group7">
+          <label>Replace Photo (optional)</label>
+          <input 
+            type="file" 
+            @change="handleEditFileSelect"
+            accept="image/*"
+          >
+          <div class="photo-preview7">
+            <img :src="editPhotoPreview" alt="Preview">
+          </div>
+        </div>
+        
+        <div class="form-actions7">
+          <button type="button" @click="cancelEditPhoto" class="cancel-button1">Cancel</button>
+          <button type="submit" class="submit-button1" :disabled="updatingPhoto">
+            <span v-if="updatingPhoto">
+              <i class="fas fa-spinner fa-spin"></i> Updating...
+            </span>
+            <span v-else>Update Photo</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Success message section -->
+      <div v-if="updateSuccess" class="update-success-message">
+        <i class="fas fa-check-circle success-icon"></i>
+        <p>Photo updated successfully!</p>
+        <button @click="cancelEditPhoto" class="ok-button">OK</button>
+      </div>
     </div>
   </div>
 </div>
@@ -454,6 +503,13 @@
    components: { Navigation },
    data() {
      return {
+      updateSuccess: false,
+    updatingPhoto: false,
+      editingPhoto: null,
+    editPhotoDescription: '',
+    editPhotoFile: null,
+    editPhotoPreview: null,
+    isEditingPhoto: false,
       zoomLevel: 1,
     isDragging: false,
     dragStart: { x: 0, y: 0 },
@@ -808,24 +864,33 @@ beforeUnmount() {
     document.removeEventListener('mouseup', this.stopDrag);
   },
 
-     handleImageError(event) {
+  handleImageError(event) {
   const incorrectUrl = event.target.src;
   console.error('Image failed to load:', incorrectUrl);
   
-  // Try to reconstruct the correct URL
+  // Check if the URL needs to be fixed
   if (incorrectUrl.includes('localhost:5173')) {
-    // Replace the frontend URL with backend URL
-    const backendBase = this.$axios.defaults.baseURL;
-    const correctUrl = incorrectUrl.replace(
-      'http://localhost:5173', 
-      backendBase
-    );
-    event.target.src = correctUrl;
-  } else {
-    // Fallback - hide the broken image
-    event.target.style.display = 'none';
-    event.target.parentElement?.classList?.add('broken-image');
+    // Try to reconstruct the correct URL
+    try {
+      // Extract just the path part
+      const urlObj = new URL(incorrectUrl);
+      const path = urlObj.pathname;
+      
+      // Create new URL using backend base URL
+      const backendBase = this.$axios.defaults.baseURL;
+      const correctUrl = backendBase + path;
+      
+      // Try loading with the corrected URL
+      event.target.src = correctUrl;
+      return;
+    } catch (e) {
+      console.error('Error reconstructing URL:', e);
+    }
   }
+  
+  // Fallback - hide the broken image
+  event.target.style.display = 'none';
+  event.target.parentElement?.classList?.add('broken-image');
 },
 
      showVoiceHelp() {
@@ -1163,39 +1228,130 @@ beforeUnmount() {
     }
   },
 
-  async fetchPhotos() {
-    this.photosLoading = true;
-    this.photosError = null;
-    try {
-      const response = await this.$axios.get(
-        `/api/photos`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
-          }
-        }
-      );
+  startEditPhoto(photo) {
+    this.editingPhoto = { ...photo };
+    this.editPhotoDescription = photo.description || '';
+    this.editPhotoPreview = photo.image_url;
+    this.isEditingPhoto = true;
+  },
+
+  handleEditFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+      if (!file.type.match('image.*')) {
+        this.$toast.error('Please select an image file');
+        return;
+      }
       
-      if (response.data && response.data.success === 1) {
+      if (file.size > 5 * 1024 * 1024) {
+        this.$toast.error('Image size should be less than 5MB');
+        return;
+      }
+      
+      this.editPhotoFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.editPhotoPreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  },
+
+  async updatePhoto() {
+  if (!this.editingPhoto) return;
+
+  try {
+    const formData = new FormData();
+    formData.append('description', this.editPhotoDescription);
+    if (this.editPhotoFile) {
+      formData.append('photo', this.editPhotoFile);
+    }
+
+    const response = await this.$axios.put(
+      `/api/photos/${this.editingPhoto.id}`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
+
+    if (response.data && response.data.success === 1) {
+      // Update the photo in the list with complete URL
+      const updatedPhoto = response.data.photo;
+      if (!updatedPhoto.image_url.startsWith('http')) {
+        updatedPhoto.image_url = `${this.$axios.defaults.baseURL}${updatedPhoto.image_url}`;
+      }
+
+      const index = this.groupPhotos.findIndex(p => p.id === this.editingPhoto.id);
+      if (index !== -1) {
+        this.groupPhotos[index] = {
+          ...this.groupPhotos[index],
+          description: updatedPhoto.description,
+          image_url: updatedPhoto.image_url,
+          created_at: updatedPhoto.created_at
+        };
+      }
+
+      this.updateSuccess = true;
+    } else {
+      throw new Error(response.data?.message || 'Update failed');
+    }
+  } catch (error) {
+    console.error('Update error:', error);
+    this.$toast.error(error.response?.data?.message || error.message || 'Failed to update photo');
+  } finally {
+    this.updatingPhoto = false;
+  }
+},
+
+cancelEditPhoto() {
+  this.editingPhoto = null;
+  this.editPhotoDescription = '';
+  this.editPhotoFile = null;
+  this.editPhotoPreview = null;
+  this.updateSuccess = false;
+  this.isEditingPhoto = false;
+},
+
+async fetchPhotos() {
+  this.photosLoading = true;
+  this.photosError = null;
+  try {
+    const response = await this.$axios.get(
+      `/api/photos`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
+    
+    if (response.data && response.data.success === 1) {
       this.groupPhotos = response.data.photos.map(photo => {
+        // Ensure image_url is complete
+        let imageUrl = photo.image_url;
+        if (!imageUrl.startsWith('http')) {
+          imageUrl = `${this.$axios.defaults.baseURL}${imageUrl}`;
+        }
+        
         return {
           ...photo,
-          image_url: photo.image_url.startsWith('/uploads')
-            ? `${this.$axios.defaults.baseURL}${photo.image_url}`
-            : photo.image_url,
-          // Ensure these fields exist
+          image_url: imageUrl,
           username: photo.username || 'Unknown',
           created_at: photo.created_at || new Date().toISOString()
         };
       });
-      }
-    } catch (err) {
-      this.photosError = err.response?.data?.message || 'Failed to load photos';
-      console.error('Error fetching photos:', err);
-    } finally {
-      this.photosLoading = false;
     }
-  },
+  } catch (err) {
+    this.photosError = err.response?.data?.message || 'Failed to load photos';
+    console.error('Error fetching photos:', err);
+  } finally {
+    this.photosLoading = false;
+  }
+},
 
 handleFileSelect(event) {
     const file = event.target.files[0];
@@ -2009,6 +2165,175 @@ async deleteExpenseHandler(expense) {
 
  
 <style scoped>
+.update-success-message {
+  text-align: center;
+  padding: 20px;
+}
+
+.success-icon {
+  color: #4CAF50;
+  font-size: 50px;
+  margin-bottom: 20px;
+}
+
+.ok-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.ok-button:hover {
+  background-color: #45a049;
+}
+.modal-overlay7 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content7.photo-edit-modal {
+  background-color: #f9fefc;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-height: 90vh;
+}
+
+.modal-header7 {
+  padding: 30px 30px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 3px solid #4f7a6b;
+  background: linear-gradient(135deg, #8bbcae, #6a9c89);
+  box-shadow: inset 0 -4px 6px rgba(0,0,0,0.1);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.modal-header7 h3 {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: 1.6rem;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.close-button7 {
+  position: absolute;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #e4f9e4;
+  transition: color 0.3s ease;
+  padding: 5px;
+  border-radius: 50%;
+}
+
+.modal-header7 .close-button:hover {
+  color: #f9fefc;
+  background: rgba(255, 255, 255, 0.15);
+}
+.modal-body7 {
+  padding: 16px 20px;
+  background-color: #eefbf5; 
+}
+
+.form-group7 {
+  margin-bottom: 15px;
+}
+
+.form-group7 label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #4f7a6b;
+}
+
+.form-group7 textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 14px;
+  height: 60px;
+}
+
+.form-group7 input[type="file"] {
+  width: 96%;
+  padding: 8px;
+  border: 1px solid #c0c0c0;
+  border-radius: 4px;
+}
+
+.photo-preview7 {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.photo-preview7 img {
+  max-width: 200px;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.form-actions7 {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.edit-photo-btn {
+  background: linear-gradient(135deg,#a7d1c3, #8bbcae, #6a9c89 );
+  color: white;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(0px); /* Slight lift */
+  transition: background 0.3s ease;
+}
+
+.edit-photo-btn:hover {
+  background: linear-gradient( 135deg, #9fcfc1,#7fb1a3, #5e8f7d );
+}
+
+.photo-actions {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: flex;
+}
 .image-container {
   width: 100%;
   height: 250px;
@@ -2145,19 +2470,11 @@ async deleteExpenseHandler(expense) {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  /* Add these transition properties */
-  transition: opacity 0.3s ease;
-}
-
-/* Add this new class for hidden state */
-.modal-overlay5.hidden {
-  opacity: 0;
-  pointer-events: none;
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
 .modal-content5 {
@@ -2171,16 +2488,7 @@ async deleteExpenseHandler(expense) {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   max-height: 90vh;
-  /* Add transform for smooth animation */
-  transform: translateY(0);
-  transition: transform 0.3s ease;
 }
-
-/* Add this for hidden modal content */
-.modal-overlay5.hidden .modal-content5 {
-  transform: translateY(-20px);
-}
-
 
 .modal-header5 {
   padding: 30px 30px;
@@ -2291,12 +2599,12 @@ async deleteExpenseHandler(expense) {
   align-items: center;
   gap: 8px;
   font-weight: 500;
-  font-style: italic; /* gentle style for description */
+  font-style: italic; 
 }
 
 
 .upload-photo-btn {
-  background: linear-gradient(135deg, #a7d2c6, #8bbcae, #6a9c89);
+  background: linear-gradient(135deg, #a7d2c6, #8bbcae, #6a9c93);
   color: white;
   font-size: 15px;
   border: none;
@@ -2323,7 +2631,7 @@ async deleteExpenseHandler(expense) {
 }
 
 .photo-card {
-  border: 2px solid #4f7a6b;
+  border: 2px solid #6a9c89;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -2367,7 +2675,7 @@ async deleteExpenseHandler(expense) {
 }
 
 .delete-photo-btn {
-  background-color: rgba(255,0,0,0.7);
+  background: linear-gradient(135deg,rgba(255, 102, 102, 0.9),rgba(255, 80, 80, 0.9),rgba(200, 40, 40, 0.9) );
   color: white;
   border: none;
   width: 30px;
@@ -2377,6 +2685,11 @@ async deleteExpenseHandler(expense) {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.3s ease;
+}
+
+.delete-photo-btn:hover {
+  background: linear-gradient(135deg,rgba(255, 120, 120, 1),rgba(255, 60, 60, 1),rgba(180, 30, 30, 1) );
 }
 
 .photo-meta {
@@ -2421,17 +2734,19 @@ async deleteExpenseHandler(expense) {
 }
 
 .photo-preview {
-  margin-top: 10px;
-  max-height: 300px;
-  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 5px; /* reduced from 10px */
 }
 
 .photo-preview img {
-  width: 100%;
+  max-width: 200px !important; /* smaller than 100px */
   height: auto;
-  max-height: 100px;
-  object-fit: contain;
+  border-radius: 6px; /* slightly smaller corners */
+  border: 1px solid #ccc;
 }
+
 
 /* Photo View Modal */
 .photo-view-modal .modal-content5 {
@@ -2475,9 +2790,9 @@ async deleteExpenseHandler(expense) {
   justify-content: center; /* Center horizontally */
   align-items: center;     /* Center vertically */
   border-bottom: 2px solid #d5d4d4;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   text-align: center;
-  gap: 400px; /* Optional: spacing between buttons */
+  gap: 300px; /* Optional: spacing between buttons */
 }
 
 
@@ -3200,20 +3515,24 @@ async deleteExpenseHandler(expense) {
   margin-top: 100px;
   display: flex;
   flex-wrap: nowrap; 
-  gap: 20px;
-  width: 100%;
+  gap: 35px;
+  width: 90%;
   flex-direction: row;
+  justify-content: center;     /* Centers items horizontally */
+  margin-left: auto;           /* Centers the container */
+  margin-right: auto;
 } 
 
 .budget-container {
-  flex: 1 1 30%;
+  flex: 1 1 350px;
   min-width: 150px;
-  background-color: #e8f8f1; 
+  height: auto;
+  max-height: 600px;
+  background: linear-gradient(135deg, #fdfffe, #ecf9f6, #def4f1);
   padding: 20px;
   border-radius: 15px;
-  border: 2px solid #2e4e38;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  height: auto;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.293);
   color: #1e3a2b;
   font-size: 1.05rem;
 }
@@ -3239,19 +3558,17 @@ async deleteExpenseHandler(expense) {
 }
 
 .btn-add, .btn-edit {
-  background: linear-gradient(135deg, #70a18d, #487061);
+  background: linear-gradient(135deg, #6fcfa5, #3a9d8f); /* Harmonized green gradient */
   color: white;
   border: none;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  max-width: 72px;
+  max-width: 80px;
   display: inline-block;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
-  
-  /* Creative additions */
   position: relative;
   overflow: hidden;
   font-weight: 600;
@@ -3267,7 +3584,7 @@ async deleteExpenseHandler(expense) {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle at center, rgba(255,255,255,0.15), transparent 70%);
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2), transparent 70%);
   opacity: 0;
   transition: opacity 0.3s ease;
   border-radius: 8px;
@@ -3279,20 +3596,18 @@ async deleteExpenseHandler(expense) {
   opacity: 1;
 }
 
-/* Hover effect */
 .btn-add:hover, .btn-edit:hover {
-  background: #e6e6e6;
-  color: #2a2a2a;
+  background: linear-gradient(135deg, #4f946c, #296e66);
+  color: white;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
   font-weight: 700;
   letter-spacing: 0.1em;
 }
 
-
 .budget-display {
   flex-wrap: wrap;
-  background: rgba(32, 28, 28, 0.05);
+  background: rgba(91, 83, 83, 0.068);
   padding: 20px;
   border-radius: 10px;
 }
@@ -3436,14 +3751,26 @@ async deleteExpenseHandler(expense) {
 }
 
 .month-selector button {
-  border: 1px solid #ddd;
+  border: none;
   cursor: pointer;
-  transition: all 0.3s;
-  background: #4f7265;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #6fcf97, #3a9d8f);
   color: white;
-  padding: 6px 12px;
-  border-radius: 5px;
+  padding: 6px 14px;
+  border-radius: 6px;
   font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.month-selector button:hover {
+  background: linear-gradient(135deg, #63a485, #255a52);
+  color: white;
+  transform: translateY(-1.5px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 }
 
 .expenses-summary {
@@ -3545,7 +3872,7 @@ async deleteExpenseHandler(expense) {
 }
 
 .btn-save {
-  background-color: #4f7a6b;
+  background: linear-gradient(135deg, #6fcfa5, #3a9d8f);
   color: #fff;
   border: none;
 }
@@ -3613,33 +3940,34 @@ async deleteExpenseHandler(expense) {
   display: flex;
   flex-wrap: wrap;
   align-content: center;
-  flex: 1 1 65%;
+  flex: 1 1 60%;
   min-width: 280px;
-  background-color: #dffae7;
-  border: 2px solid #365c42;
+  background: linear-gradient(to right, #fcfffe, #ecf9f6, #e7fdfa);
+  border: none;
   padding: 20px;
   border-radius: 15px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.286);
   height: auto;
 }
 
 .expenses-container {
-  max-width: 100%; 
   margin: 0 auto;
   box-sizing: border-box;
-  width: 100%;
+  width: 90%;
+  max-height: 680px;
   background-color: white;
   padding: 20px;
   border-radius: 15px;
-  border: 3px solid #6A9C89;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.242);
   margin-top: 30px;
-  transition: box-shadow 0.3s ease;
   transition: all 0.3s ease;
 }
- 
+
 .expenses-container:hover {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
 }
 
  .expense-form {
@@ -3670,8 +3998,9 @@ h3{
 }
 
 .expenses-table {
-  overflow-x: auto;
-  margin: 30px 0; 
+  max-height: 400px; 
+  overflow-y: auto;
+  margin: 0;
 }  
 
 table {
@@ -3684,38 +4013,43 @@ table {
 th, td {
   padding: 6px 20px; 
   text-align: center;
-  border-bottom: 2px solid #e0e0e0;
-  color: #444;
+  border-bottom: 1px solid #d7e2dc;
+  vertical-align: middle;
+  user-select: none;
   font-size: 0.95rem;
 } 
 
 th {
-  background-color: #6A9C89;
+  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
   font-weight: 700;
   font-size: 1rem; 
   padding: 12px 20px; 
   color: white;
-  border-bottom: 3px solid #4f7a6b; 
+  text-transform: uppercase;
+  border-bottom: 2px solid #4f7a6b;
+  box-shadow: 0 2px 6px rgba(74, 109, 92, 0.3);
+  border-radius: 20px 20px 0 0;
 } 
 
 tr {
-  background-color: #ecfdf5;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+  background-color: #fbfbfb;
+  box-shadow: 0 10px 10px rgba(0,0,0,0.05); 
   margin-bottom: 15px; 
-  transition: all 0.2s ease;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 tr:hover {
   background-color: #f9f9f9;
   transform: translateY(-2px); 
-  box-shadow: 0 6px 12px rgba(0,0,0,0.08); 
-  transition: all 0.2s ease; 
+  box-shadow: 0 10px 12px rgba(0,0,0,0.08); 
+   transition: background-color 0.25s ease, box-shadow 0.25s ease;
 } 
 
 td, th {
   vertical-align: middle;
   white-space: nowrap;
 }
+
 .actions {
   display: flex;
   gap: 10px;
@@ -3737,7 +4071,7 @@ td, th {
 }
 
 .edit-btn {
-  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
+  background: linear-gradient(135deg, #6fcfa5, #3a9d8f);
   color: white;
   box-shadow: 0 2px 5px rgba(106, 156, 137, 0.4);
 }
@@ -3779,21 +4113,21 @@ td, th {
      font-size: 20px;
      font-weight: bold;
      color: #333;
-     padding: 20px;
-     background-color: #d0ebdd;
+     padding: 15px;
+     background-color: #d2e4e2;
      box-sizing: border-box;
      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
      text-align: center;
      width: 100%;
      position: relative; 
-     bottom: 0;   
+     bottom: 0;  
      border-radius: 12px;
-     margin-top: -20px;
+     margin-top: 10px;
 }
 
 .form-title {
-  background: linear-gradient(to right, #8bbcae, #6a9c89);
-  color: #ffffff;
+  background: linear-gradient(to right, #c2f3e5, #9ae2c7);
+  color: #26665e;
   padding: 14px 20px;
   border-radius: 10px;
   text-align: center;
@@ -3813,7 +4147,7 @@ td, th {
 .form-group1 label,
 .form-group label {
   margin-bottom: 4px;
-  color: #4f7a6b;
+  color: #26665e;
   font-size: 1.1rem;
   font-weight: 600;
   text-align: left;
@@ -3824,14 +4158,13 @@ td, th {
 .form-group h3 {
   font-size: 1.35rem;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   margin-top: 0;
-  color: #ffffff;
-  background: linear-gradient(135deg, #8bbcae, #4f7a6b);
-  padding: 20px 16px;
-  border-radius: 10px;
+  color: #183d2a;
+  background:none;
+  padding: 16px 16px;
+  border-bottom: 2px solid #183d2a;
   position: relative;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   letter-spacing: 0.5px;
 }
@@ -3852,7 +4185,7 @@ select {
   padding: 8px 10px;
   font-size: 0.95rem;
   border-radius: 8px;
-  border: 1.8px solid #6a9c89;
+  border: 1.8px solid #26665e;
   background-color: #f7f9f8;
   color: #333;
   box-sizing: border-box;
@@ -3881,8 +4214,8 @@ select[disabled] {
  
 .btn {
   padding: 12px 50px;
-  background: linear-gradient(135deg, #70a18d, #487061);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #6fcfa5, #3a9d8f); /* More vibrant green tones */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   color: #ffffff;
   border: none;
   border-radius: 14px;
@@ -3902,7 +4235,7 @@ select[disabled] {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
   transition: all 0.4s ease;
 }
 
@@ -3911,8 +4244,8 @@ select[disabled] {
 }
 
 .btn:hover {
-  background: #dcdcdc;
-  color: #2a4935;
+  background: linear-gradient(135deg, #88e0b5, #32786e); /* Subtle hover shift */
+  color: #ffffff;
   transform: translateY(-2px);
 }
 
@@ -3949,14 +4282,17 @@ select[disabled] {
 @media (max-width: 760px) {
   .top-row {
     flex-wrap: wrap;
-    flex-direction: column;
   }
   .month-selector span{
     min-width: 150px;
-    padding: 10px;
+    padding: 0px;
   }
   .expenses-container {
     min-width: 340px;
+  }
+  .expense-photo-tabs {
+    justify-content: space-between;
+    gap: 10px;
   }
 }
 
