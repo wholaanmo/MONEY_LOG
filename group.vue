@@ -197,20 +197,27 @@
       min="0"
       step="0.01"
       @keyup.enter="saveContribution"
+      :disabled="!canAddContributions"
     >
   </div>
   <div class="btn-save-wrapper">
-  <button 
-    @click="saveContribution" 
-    class="btn-save"
-    :disabled="paidAmountLoading || !paidAmountInput || paidAmountInput <= 0"
-  >
-    <span v-if="paidAmountLoading">
-      <i class="fas fa-spinner fa-spin"></i> Saving...
-    </span>
-    <span v-else>Save Contribution</span>
+    <button 
+      @click="saveContribution" 
+      class="btn-save"
+      :disabled="paidAmountLoading || !paidAmountInput || paidAmountInput <= 0 || !canAddContributions"
+      :class="{ 'disabled-btn': !canAddContributions }"
+    >
+      <span v-if="paidAmountLoading">
+        <i class="fas fa-spinner fa-spin"></i> Saving...
+      </span>
+      <span v-else>Save Contribution</span>
   </button>
   </div>
+
+  <div v-if="!canAddContributions" class="contributions-disabled-notice">
+    <i class="fas fa-info-circle"></i> Contributions can only be added after expenses are created in this group.
+  </div>
+
   <div v-if="contributionHistory.length > 0" class="contribution-history">
     <h4><i class="fas fa-history"></i> Your Contribution History</h4>
     <ul class="contribution-list">
@@ -433,7 +440,7 @@
     </div>
   </div>
 
-        <div v-if="isAdmin" class="invite-section">
+        <div class="invite-section">
             <h3>Invite New Member</h3>
             <div class="invite-form">
               <input 
@@ -1146,6 +1153,10 @@ export default {
       isAdmin: state => state.isAdmin,
       groupBudget: state => state.groupBudget || {}
     }),
+
+    canAddContributions() {
+    return this.filteredExpenses.length > 0;
+  },
 
     zoomStyle() {
     return {
@@ -2736,6 +2747,11 @@ async updateContribution() {
         this.showError('Please enter a valid amount');
         return;
       }
+
+      if (this.filteredExpenses.length === 0) {
+      this.showError('Cannot add contributions - the group has no expenses yet');
+      return;
+    }
       
       const user = JSON.parse(localStorage.getItem('user'));
       const response = await this.$axios.post(
@@ -3336,7 +3352,8 @@ showError(message) {
       this.showConfirmationModal = true;
     },
     
-  async sendInvite() {
+// In your methods section of Group.vue
+async sendInvite() {
   this.inviteError = '';
   this.inviteSuccess = '';
   
@@ -3360,9 +3377,30 @@ showError(message) {
       }
     );
 
-     if (response.data.success) {
+    if (response.data.success) {
       this.inviteSuccess = 'Invitation sent successfully!';
       this.inviteEmail = '';
+      
+      // Show notification with copyable group code
+      this.$notify({
+        title: 'Invitation Sent',
+        message: `
+          <div>
+            <p>Invitation sent to ${this.inviteEmail}</p>
+            <div class="group-code-container" style="margin-top: 10px;">
+              <p>Group Code: <strong>${this.group.group_code}</strong></p>
+              <button 
+                @click="copyGroupCode"
+                style="background: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;"
+              >
+                Copy Code
+              </button>
+            </div>
+          </div>
+        `,
+        dangerouslyUseHTMLString: true,
+        duration: 5000
+      });
       
       setTimeout(() => {
         this.inviteSuccess = '';
@@ -3578,6 +3616,30 @@ if (response.data.success) {
 </script>
 
 <style scoped>
+.contributions-disabled-notice {
+  background-color: #e3f3ee;
+  padding: 10px;
+  margin: 10px auto;             
+  border-radius: 4px;
+  color: #2c3e50;                 
+  font-size: 0.9rem;
+  text-align: center;
+  width: fit-content;
+  max-width: 100%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* subtle shadow */
+}
+
+.contributions-disabled-notice i {
+  color: #2c3e50;                  /* match white tone */
+  margin-right: 8px;
+}
+
+.disabled-btn {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #e0e0e0 !important;
+}
+
 /* Add to your styles */
 .blocked-members-section {
   margin-top: 20px;
@@ -3760,7 +3822,7 @@ if (response.data.success) {
   background-color: #f9fefc;
   border-radius: 16px;
   max-width: 500px;
-  width: 100%;
+  width: 90%;
   margin: 60px auto;
   padding: 0;
   font-family: 'Poppins', sans-serif;
@@ -3776,7 +3838,7 @@ if (response.data.success) {
   justify-content: center;
   align-items: center;
   border-bottom: 3px solid #4f7a6b;
-  background: linear-gradient(135deg, #8bbcae, #6a9c89);
+  background: linear-gradient(135deg, #b8f0db, #9fe3c9, #94dfd3);
   box-shadow: inset 0 -4px 6px rgba(0,0,0,0.1);
   color: #fff;
   font-weight: 700;
@@ -3785,11 +3847,12 @@ if (response.data.success) {
 
 .modal-header5 h3 {
   position: absolute;
+  text-align: center;
   left: 50%;
   transform: translateX(-50%);
   margin: 0;
   font-size: 1.6rem;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  text-shadow: 2px 1px 3px rgba(0, 0, 0, 0.427);
 }
 
 .modal-header6 {
@@ -3852,7 +3915,7 @@ if (response.data.success) {
 
 .modal-body5 {
   padding: 16px 20px;
-  background-color: #f7feff; 
+  background-color: #FBFFFC; 
 }
 
 .form-group5 {
@@ -3863,7 +3926,7 @@ if (response.data.success) {
   display: block;
   margin-bottom: 10px;
   font-weight: bold;
-  color: #4f7a6b;
+  color: #2a646d;
 }
 
 .form-group5 textarea {
@@ -3887,6 +3950,8 @@ if (response.data.success) {
 }
 .photos-tab {
   padding: 20px;
+  max-height: 680px;
+  overflow-y: auto;
 }
 
 .photos-header {
@@ -3894,12 +3959,12 @@ if (response.data.success) {
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  margin-top: -40px;
+  margin-top: -30px;
   margin-bottom: 20px;
 }
 
 .upload-photo-btn {
-  background: linear-gradient(135deg, #9bd2c2, #72aa95, #649b87);
+  background: linear-gradient(135deg, #9fccbd, #6eb3a3, #82b2a1);
   color: white;
   font-size: 14px;
   border: none;
@@ -4497,8 +4562,6 @@ if (response.data.success) {
   z-index: 1000;
 }
 
-
-
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -4544,7 +4607,7 @@ if (response.data.success) {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #82b1a3, #699b88, #476e60);
+  background: linear-gradient(135deg, #afd7c9, #62a293, #8fbdad);
   color: #fff;
   padding: 10px 18px;
   font-size: 0.9rem;
@@ -4553,13 +4616,14 @@ if (response.data.success) {
   cursor: pointer;
   font-weight: 700;
   box-shadow: 0 4px 6px rgba(106, 156, 137, 0.4);
+  text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.352);
   transition: background 0.3s ease, box-shadow 0.3s ease;
   user-select: none;
   min-width: 160px;
 }
 
 .btn-save:hover {
-  background: linear-gradient(135deg, #7aa98c, #5e8873, #486858);
+  background: linear-gradient(135deg, #94b6aa, #4a7a6f, #73988b);
   box-shadow: 0 6px 12px rgba(74, 109, 92, 0.5);
 }
 
@@ -4573,7 +4637,7 @@ if (response.data.success) {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
+  background: linear-gradient(135deg, #afd7c9, #62a293, #8fbdad);
   color: #fff;
   padding: 10px 18px;
   font-size: 0.9rem;
@@ -4588,7 +4652,7 @@ if (response.data.success) {
 }
 
 .btn-save1:hover {
-  background: linear-gradient(135deg, #7aa98c, #5e8873, #486858);
+  background: linear-gradient(135deg, #94b6aa, #4a7a6f, #73988b);
   box-shadow: 0 6px 12px rgba(74, 109, 92, 0.5);
 }
 
@@ -4653,7 +4717,7 @@ if (response.data.success) {
   list-style: none;
   padding: 0 10px;
   margin: 0;
-  max-height: 100px;
+  max-height: 200px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #ccc transparent;
@@ -4700,7 +4764,7 @@ if (response.data.success) {
   padding: 20px;
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 10px #93b9a9;
+  box-shadow: 0 2px 10px #005a425a;
 }
 
 .contribution-header {
@@ -4769,15 +4833,18 @@ if (response.data.success) {
 }
 .contribution-form {
   max-width: 500px;
+  min-height: 250px;
+  max-height: 600px;
   margin: 0 auto 40px;
   padding: 20px;
-  background: #f4faf7;
-  border: 2px solid #2e4e38;
+  background: #fcfeff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.277);
+  border: none;
   border-radius: 8px;
 }
 
 .contribution-form h3 {
-  margin-top: 0;
+  margin-top: 5px;
   color: #2c3e50;
   text-align: center;
 }
@@ -4830,7 +4897,7 @@ if (response.data.success) {
 }
 
 .member-contributions-table tbody tr:hover {
-  background-color: #c7e6cb;
+  background-color: #c7e6e0;
   box-shadow: 0 4px 10px rgba(74, 109, 92, 0.2);
   transform: translateY(-2px);
   transition: all 0.25s ease;
@@ -5049,7 +5116,8 @@ if (response.data.success) {
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  min-width: 350px;
+  min-width: 300px;
+  width: 50%;
   min-height: 50px;
   font-size: 20px;
 }
@@ -5088,7 +5156,7 @@ if (response.data.success) {
 .group-con {
   display: flex;
   flex-wrap: nowrap; /* prevent wrapping by default */
-  gap: 12px;
+  gap: 20px;
   width: 100%;
   flex-direction: row;
 }
@@ -5099,15 +5167,15 @@ if (response.data.success) {
 }
 
 .budget-container {
-  background-color: #f4faf7;
+  background: #fcfeff;
   padding: 20px;
   border-radius: 15px;
-  border: 2px solid #2e4e38;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.277);
   color: white;
   min-height: 250px;
   max-height: 600px;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 .budget-header {
@@ -5121,11 +5189,11 @@ if (response.data.success) {
 
 .budget-header h3 {
   font-size: 1.5rem;
-  color: #2a4935;
+  color: #2c3e50;
   margin: 0;
 }
 .btn-add, .btn-edit {
-  background: linear-gradient(135deg, #739c90, #5d8978, #476e60);
+  background: linear-gradient(135deg, #9fccbd, #6eb3a3, #82b2a1);
   color: white;
   border: none;
   padding: 8px 12px;
@@ -5182,12 +5250,12 @@ if (response.data.success) {
 
 .budget-name span,
 .budget-amount span {
-  color: #388e3c;   
+  color: #307968;   
 }
 
 .budget-name strong,
 .budget-amount strong {
-  color:  #388e3c;
+  color:  #307968;
   font-weight: bold;
 }
 
@@ -5272,19 +5340,21 @@ h2 {
   font-size: 1.3rem;
   font-weight: 600;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.222);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.396);
   letter-spacing: 0.5px;
   border: none;
-  background: linear-gradient(135deg, #8fc4b4, #72aa95, #548271);
+  background: linear-gradient(135deg, #ace1ce, #8dd2b8, #78bdb1);
 }
 
 .budget-form {
-  background-color: #eefbf5;
-  border: 1px solid #2a4935;
+  background-color: #fafffb;
+  border: none;
   color: #333;
   padding: 25px;
   border-radius: 10px;
   width: 100%;
   max-width: 400px;
+  min-width: 300px;
 }
 
 .budget-form .form-group {
@@ -5350,10 +5420,10 @@ h2 {
 }
 
 .group-body {
-  background: #ffffff;
+  background: #fbffff;
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  border: 2px solid #2e7d32;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.277);
+  border: none; 
   padding: 30px;
   margin-bottom: 20px;
 }
@@ -5368,7 +5438,7 @@ h2 {
 }
 
 .total-amount-card {
-  background: #d0ebe3;
+  background: #dbecea;
   border-radius: 10px;
   height: 70px;
   padding: 14px 16px;
@@ -5433,7 +5503,7 @@ h2 {
     display: inline-block;
     font-size: 1.5rem;
     font-weight: 600;
-    color: #2a4935;
+    color: #2c3e50;
     padding: 25px 0px 25px 0px;
     border-radius: 8px;
     animation: fadeSlideIn 0.6s ease-out;
@@ -5445,11 +5515,16 @@ h2 {
     width: 100%;
   }
 
+.expenses-table {
+  max-height: 400px;  
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
 .expenses-table table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0 12px; 
-  margin-bottom: 30px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #fff;
   border-radius: 10px;
@@ -5469,15 +5544,17 @@ h2 {
 }
 
 .expenses-table th {
-  background-color: #6ea792;              /* your base green */
+  background: linear-gradient(135deg, #6fcfa5, #3a9d8f);
+  font-size: 0.8rem;
+  padding: 12px 20px;
   color: white;
+  text-transform: uppercase;
+  border-bottom: 2px solid #4f7a6b;    
+  border-radius: 14px 14px 0 0;
   position: sticky;
   top: 0;
   font-weight: 600;
-  padding: 12px 20px;
-  border-bottom: 3px solid #4f7a6b;      /* darker shade from earlier gradient */
   letter-spacing: 0.05em;
-  text-transform: uppercase;
   box-shadow: 0 2px 4px rgba(74, 109, 92, 0.2);  /* subtle green tinted shadow */
 }
 Z
@@ -5528,7 +5605,7 @@ Z
 .edit-btn {
   background: none;
   border: none;
-  color: #6A9C89;        /* base color */
+  color: #307968;        
   cursor: pointer;
   font-size: 1rem;
   padding: 4px;
@@ -5581,16 +5658,17 @@ Z
 
 .group-content {
   width: 100%;
-  background: #ecfdf0;
+      background: linear-gradient(135deg, #fdfffe, #ecf9f6, #def4f1);
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 2px solid #2e4e38;
-  padding: 25px;
-  margin-bottom: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.241);
+  border: none;
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
 .group-header {
-  margin-bottom: 10px;
+  margin-bottom: 5px;
+  margin-left: 10px;
 }
 
 .header-top-row {
@@ -5657,7 +5735,7 @@ Z
 }
 
 .my-groups-btn {
-  background-color: #4d7768;
+  background-color: #589083; 
   color: white;
   border: none;
   padding: 8px 16px;
@@ -5856,7 +5934,7 @@ Z
 .group-container {
   display: flex;
   flex-wrap: wrap;
-  max-width: 100%;
+  max-width: 90%;
   margin: 0 auto;
   padding: 120px 20px 20px;
 }
@@ -5978,10 +6056,10 @@ Z
 }
 
 .add-expense-button {
-  background: linear-gradient(to right, #e5faed, #bde8d3);
+  background: linear-gradient(135deg, #effdf8, #def4ee, #e5faf3);
   color: #2a4935;
   border: none;
-  padding: 20px 20px;
+  padding: 10px 20px;
   border-radius: 12px;
   cursor: pointer;
   display: flex;
@@ -6102,7 +6180,7 @@ Z
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background: linear-gradient(135deg, #f2fef7, #e5faee); 
+  background: linear-gradient(135deg, #edf9f2, #ecf9f6); 
   border-radius: 12px; 
   box-shadow: 0 2px 5px #93b9a9;
   transition: box-shadow 0.3s ease, transform 0.2s ease;
@@ -6121,7 +6199,7 @@ Z
 .member-name {
   font-weight: 600;
   font-size: 1rem;
-  color: #4f7a6b; /* darker green for better contrast */
+  color: #2a646d; 
 }
 
 .member-email {
@@ -6181,10 +6259,10 @@ Z
 .invite-section {
   margin-top: 30px;
   padding: 25px 20px;
-  background: linear-gradient(135deg, #f5fdfa, #dff5eb); /* slightly richer gradient */
+  background: linear-gradient(to right, #fdfffe, #ecf9f6, #def4f1);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.348);
-  border-left: 5px solid #5d8978;
+  border-left: 4px solid #2a646d;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -6239,7 +6317,8 @@ Z
 }
 
 .invite-button {
-  background: linear-gradient(135deg, #5d8978, #476e60);
+  background: linear-gradient(135deg, #9fccbd, #6eb3a3, #82b2a1);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.396);;
   color: white;
   border: none;
   padding: 10px 18px;
@@ -6293,7 +6372,7 @@ Z
 }
 
 .settings-section {
-  background: linear-gradient(135deg, #f7fcfa, #effaf4);
+  background: linear-gradient(to right, #fdfffe, #ecf9f6, #def4f1);
   border: 1px solid #cfe2db;
   border-radius: 16px;
   padding: 30px 40px;
@@ -6304,8 +6383,8 @@ Z
 }
 
 .settings-section:hover {
-  box-shadow: 0 12px 28px rgba(106, 156, 137, 0.12);
-  border-color: #bad7cc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(1, 83, 52, 0.232);
 }
 
 
@@ -6478,7 +6557,7 @@ Z
   background-color: #f9fefc;
   border-radius: 16px;
   max-width: 500px;
-  width: 100%;
+  width: 90%;
   margin: 100px auto;
   padding: 0;
   font-family: 'Poppins', sans-serif;
@@ -6493,7 +6572,7 @@ Z
   align-items: center;
   padding: 40px;
   border-bottom: 3px solid #4f7a6b;
-  background: linear-gradient(135deg, #8bbcae, #6a9c89);
+  background: linear-gradient(135deg, #b8f0db, #9fe3c9, #94dfd3);
   box-shadow: inset 0 -4px 6px rgba(0,0,0,0.1);
   color: #fff;
   font-weight: 700;
@@ -6502,12 +6581,14 @@ Z
 
 .modal-header h3 {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 50%;                      /* Center horizontally */
+  transform: translateX(-50%);    /* Adjust back by 50% of its width */
   margin: 0;
   font-size: 1.6rem;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  text-align: center;
+  text-shadow: 0px 2px 3px rgba(0, 0, 0, 0.352);
 }
+
 .modal-header .close-button {
   position: absolute;
   right: 15px;
@@ -6528,7 +6609,7 @@ Z
 
 .modal-body {
   padding: 20px;
-  background-color: #eefbf5; 
+  background-color: #FBFFFC; 
 }
 
 .modal-overlay2 {
@@ -6587,7 +6668,7 @@ Z
   display: block;
   margin-bottom: 10px;
   font-weight: bold;
-  color: #4f7a6b;
+  color: #2a646d;
 }
 
 .form-group input {
@@ -6621,7 +6702,8 @@ button.cancel-button{
 }
 
 .submit-button {
-  background: linear-gradient(135deg, #82b1a3, #699b88, #476e60);
+  background: linear-gradient(135deg, #9fccbd, #6eb3a3, #82b2a1);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.352);
   color: #fff;
   border: none;
   padding: 8px 16px;
@@ -6712,7 +6794,7 @@ button.cancel-button{
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 780px) {
   .group-con {
     flex-wrap: wrap;
     flex-direction: column;
@@ -6720,16 +6802,31 @@ button.cancel-button{
   .budget-total-container{
     max-width: 100%;
   }
+  .budget-form {
+   width: 80%;
+}
   .group-wrapper{
     width: 100%;
   }
   .member-item {
-  display: flex;
-  flex-wrap: wrap;
+    display: flex;
+    flex-wrap: wrap;
   }
   .contribution-form {
       max-width: 700px;
       margin-bottom: 0;
     }
+    .photos-tab {
+    max-height: 500px;
+  }
+  .invite-form {
+    flex-wrap: wrap;
+  }
+  .danger-item {
+    justify-content: center;
+  }
+  .danger-text {
+    max-width: 100%;
+  }
 }
 </style>
