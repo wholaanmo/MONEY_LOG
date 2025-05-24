@@ -2171,13 +2171,13 @@ async deleteExpenseHandler(expense) {
 }
 
 .success-icon {
-  color: #4CAF50;
+  color: #3a9d8f;
   font-size: 50px;
   margin-bottom: 20px;
 }
 
 .ok-button {
-  background-color: #4CAF50;
+  background-color: #3a9d8f;
   color: white;
   padding: 10px 20px;
   border: none;
@@ -2187,7 +2187,7 @@ async deleteExpenseHandler(expense) {
 }
 
 .ok-button:hover {
-  background-color: #45a049;
+  background-color: #6fcfa5;
 }
 .modal-overlay7 {
   position: fixed;
@@ -2378,28 +2378,6 @@ async deleteExpenseHandler(expense) {
 .upload-success-message {
   text-align: center;
   padding: 20px;
-}
-
-.success-icon {
-  font-size: 60px;
-  color: #4CAF50;
-  margin-bottom: 20px;
-}
-
-.success-close-button {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  margin-top: 20px;
-  transition: background-color 0.3s;
-}
-
-.success-close-button:hover {
-  background-color: #45a049;
 }
 .modal-overlay2 {
   position: fixed;
@@ -4020,7 +3998,7 @@ th, td {
 } 
 
 th {
-  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
+  background: linear-gradient(135deg, #6fcfa5, #3a9d8f);
   font-weight: 700;
   font-size: 1rem; 
   padding: 12px 20px; 
