@@ -139,14 +139,26 @@ body {
 }
 </style>
 
+<style>
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  background-color: #f8f9fa;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+</style>
+
 <style scoped>
 .deletion-popup {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: linear-gradient(135deg, #cde5dc, #a6cfc1, #88b8a5);
-  border: 1px solid #a5d6a7;
+  background-color: #ffffff;
+  border: 1px solid #355f52;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   padding: 15px 30px 35px 30px;
   width: 90%;
@@ -165,11 +177,11 @@ body {
   justify-content: center;
   gap: 10px;
   align-items: center;
-  color: #ffffff;
+  color: #355f52;
 }
 
 .deletion-popup p {
-  color: #f0f7f5;
+  color: #355f52;
   font-size: 1rem;
   margin-bottom: 25px;
 }
