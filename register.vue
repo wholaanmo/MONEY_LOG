@@ -394,6 +394,7 @@ export default {
 <style scoped>
 .password-input-wrapper {
     position: relative;
+    width: 100%;
 }
 
 .password-toggle {
@@ -762,8 +763,8 @@ h4 {
     transform: translateY(-2px);
     box-shadow:
         8px 8px 16px rgba(0, 0, 0, 0.1),
-        -8px -8px 16px rgba(255, 255, 255, 0.9),
-        inset 1px 1px 2px rgba(255, 255, 255, 0.9),
+        -8px -8px 16px rgba(255, 255, 255, 0.712),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.712),
         inset -1px -1px 2px rgba(0, 0, 0, 0.07);
 }
 
@@ -882,6 +883,7 @@ input.text-style1:hover {
     margin-top: 10px;
     cursor: pointer;
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.397); 
     text-align: center;
     text-decoration: none;
     transition: background 0.3s ease, box-shadow 0.3s ease;
@@ -953,14 +955,14 @@ button.login-btn:hover,
         top: -30px;
         left: 50%;
         transform: translateX(-50%);
-        color: #f9faf7;
+        color: #f7faf9;
         font-weight: bold;
         font-size: 50px;
         letter-spacing: 2px;
         padding-top: 10px;
         text-align: center;
         font-family: 'Segoe UI', 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); 
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.504); 
     }
     
     /* RESPONSIVE — Keep side-by-side, scale content */
