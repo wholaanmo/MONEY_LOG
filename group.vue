@@ -3648,25 +3648,38 @@ if (response.data.success) {
 }
 
 .btn-blocked-members {
-  background: #f8f9fa;
-  border: 1px solid #ddd;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  background: #f6fafd;
+  border: 1px solid #6a9c89;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-size: 15px;
+  font-weight: 500;
+  color: #22684d;
+  transition: 
+    background-color 0.3s ease, 
+    box-shadow 0.3s ease, 
+    transform 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .btn-blocked-members:hover {
-  background: #e9ecef;
+  background: #e0f1ef;
+  box-shadow: 0 4px 10px rgba(38, 102, 94, 0.1);
+  transform: translateY(-1px);
 }
+
 
 .blocked-members-list {
   margin-top: 1rem;
   border: 1px solid #eee;
   border-radius: 4px;
   overflow: hidden;
+  border: 2px dashed #ced4da;
+  border-radius: 8px;
 }
 
 .blocked-member-item {
@@ -3692,7 +3705,7 @@ if (response.data.success) {
 }
 
 .unblock-button {
-  background: #28a745;
+  background: #3e3f3f;
   color: white;
   border: none;
   padding: 5px 10px;
@@ -3701,7 +3714,7 @@ if (response.data.success) {
 }
 
 .unblock-button:hover {
-  background: #218838;
+  background: #737474;
 }
 
 .unblock-button:disabled {
@@ -3710,10 +3723,17 @@ if (response.data.success) {
 }
 
 .no-blocked-members {
-  padding: 1rem;
+  padding: 1.2rem;
+  margin: 1rem;
   text-align: center;
   color: #6c757d;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  font-size: 15px;
+  font-style: italic;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
+
 .modal-overlay10 {
   position: fixed;
   top: 0;
@@ -4717,7 +4737,7 @@ if (response.data.success) {
   list-style: none;
   padding: 0 10px;
   margin: 0;
-  max-height: 200px;
+  max-height: 250px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #ccc transparent;
@@ -4729,7 +4749,7 @@ if (response.data.success) {
   align-items: center;
   padding: 10px 8px;
   border-bottom: 1px solid #eaeaea;
-  font-size: 0.95rem;
+  font-size: 0.98rem;
   color: #2c3e50;
   transition: background-color 0.2s;
 }
@@ -4738,7 +4758,11 @@ if (response.data.success) {
   background-color: #f3f9ff;
 }
 
-.contribution-date,
+.contribution-date {
+  text-align: left;
+  font-size: 0.97rem;
+}
+
 .contribution-amount {
   text-align: left;
 }
@@ -4790,7 +4814,7 @@ if (response.data.success) {
 
 .contribution-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* slightly smaller min */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* slightly smaller min */
   gap: 15px;
   margin-bottom: 30px;
 }
@@ -4832,7 +4856,7 @@ if (response.data.success) {
   color: #27ae60;
 }
 .contribution-form {
-  max-width: 500px;
+  max-width: 600px;
   min-height: 250px;
   max-height: 600px;
   margin: 0 auto 40px;
@@ -5070,6 +5094,7 @@ if (response.data.success) {
 
 .member-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -5116,8 +5141,6 @@ if (response.data.success) {
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  min-width: 300px;
-  width: 50%;
   min-height: 50px;
   font-size: 20px;
 }
@@ -5354,7 +5377,7 @@ h2 {
   border-radius: 10px;
   width: 100%;
   max-width: 400px;
-  min-width: 300px;
+  min-width: 200px;
 }
 
 .budget-form .form-group {
@@ -5438,7 +5461,7 @@ h2 {
 }
 
 .total-amount-card {
-  background: #dbecea;
+  background: #d1e7e4;
   border-radius: 10px;
   height: 70px;
   padding: 14px 16px;
@@ -5516,7 +5539,7 @@ h2 {
   }
 
 .expenses-table {
-  max-height: 400px;  
+  max-height: 500px;  
   overflow-y: auto;
   margin-bottom: 20px;
 }
@@ -5544,7 +5567,7 @@ h2 {
 }
 
 .expenses-table th {
-  background: linear-gradient(135deg, #6fcfa5, #3a9d8f);
+  background: linear-gradient(135deg, #6fcfa5, #3ea799);
   font-size: 0.8rem;
   padding: 12px 20px;
   color: white;
@@ -5557,9 +5580,9 @@ h2 {
   letter-spacing: 0.05em;
   box-shadow: 0 2px 4px rgba(74, 109, 92, 0.2);  /* subtle green tinted shadow */
 }
-Z
+
 .expenses-table tbody tr {
-  background-color: #ecfdf5;
+  background-color: #fbfbfb;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.06);
   border-radius: 8px;
   transition: all 0.25s ease;
@@ -5567,7 +5590,7 @@ Z
 }
 
 .expenses-table tbody tr:hover {
-  background-color: #f1fbf7;
+  background-color: #ecfff7;
   transform: translateY(-3px);
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.12);
 }
@@ -6255,6 +6278,15 @@ Z
   box-shadow: 0 3px 8px rgba(211, 47, 47, 0.4);
 }
 
+.block-button {
+  background-color: #3e3f3f;
+  border-radius: 6px;
+  color: white;
+}
+
+.block-button:hover {
+  background: #737474;
+}
 
 .invite-section {
   margin-top: 30px;
@@ -6302,6 +6334,7 @@ Z
 
 .email-input {
   flex: 1;
+  min-width: 150px;
   padding: 10px 14px;
   border: 1px solid #b0c4b1;
   border-radius: 8px;
@@ -6736,9 +6769,6 @@ button.cancel-button{
 }
 
 
-
-
-
 .confirmation-modal {
   text-align: center;
 }
@@ -6812,6 +6842,10 @@ button.cancel-button{
     display: flex;
     flex-wrap: wrap;
   }
+  .member-actions {
+    margin-top: 5px;
+  }
+
   .contribution-form {
       max-width: 700px;
       margin-bottom: 0;
@@ -6822,11 +6856,17 @@ button.cancel-button{
   .invite-form {
     flex-wrap: wrap;
   }
+  .floating-alert{
+      width: 70%;
+  }
   .danger-item {
     justify-content: center;
   }
   .danger-text {
     max-width: 100%;
+  }
+  .confirmation-modal {
+    width: 80%;
   }
 }
 </style>
