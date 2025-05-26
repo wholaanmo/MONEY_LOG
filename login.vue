@@ -490,6 +490,7 @@ if (!/^\d{6}$/.test(otpString)) {
   <style scoped>
   .password-input-wrapper {
    position: relative;
+   width: 100%;
  }
  
  .password-toggle {
@@ -656,6 +657,7 @@ if (!/^\d{6}$/.test(otpString)) {
    transition: background 0.4s ease, transform 0.2s ease, box-shadow 0.3s ease;
    margin-bottom: 12px;
    box-shadow: 0 4px 12px rgba(84, 130, 113, 0.364);
+   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.384);
  }
  
  .reset-btn:hover {
@@ -729,7 +731,7 @@ if (!/^\d{6}$/.test(otpString)) {
  }
   
    .login-bg {
-       background-image: url("/circle1.png");
+       background-image: url("/circle.png");
        background-size: cover;
        background-position: center;
        background-repeat: no-repeat;
@@ -756,8 +758,7 @@ if (!/^\d{6}$/.test(otpString)) {
     max-width: 650px;
     min-width: 390px;
     max-height: 600px;
-    background: rgba(255, 255, 255, 0.6); /* semi-transparent white */
-    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.92); /* Crisp white with slight transparency */
     border-radius: 20px;
     display: flex;
     justify-content: space-between;
@@ -765,9 +766,28 @@ if (!/^\d{6}$/.test(otpString)) {
     padding: 15px;
     gap: 20px;
     box-sizing: border-box;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08); /* soft depth */
-    border: 1px solid rgba(255, 255, 255, 0.4); /* subtle white border */
+    
+    /* Soft 3D shadow effect (floating panel) */
+    box-shadow:
+        6px 6px 12px rgba(0, 0, 0, 0.08),    /* Bottom-right shadow */
+        6px 6px 12px rgba(0, 0, 0, 0.08),     /* Inner bottom-right shadow */
+        6px 6px 12px rgba(0, 0, 0, 0.08),  
+        6px 6px 12px rgba(0, 0, 0, 0.08),  ; 
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Subtle border for depth */
+    transition: all 0.3s ease;
+    position: relative;
 }
+
+/* Optional: Lift effect on hover */
+.login-container:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        8px 8px 16px rgba(0, 0, 0, 0.1),
+        -8px -8px 16px rgba(255, 255, 255, 0.712),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.712),
+        inset -1px -1px 2px rgba(0, 0, 0, 0.07);
+}
+
    
    .login-form {
        width: 50%;
@@ -853,6 +873,7 @@ input.text-style:hover {
     margin-top: 10px;
     cursor: pointer;
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.397); 
     text-align: center;
     text-decoration: none;
     transition: background 0.3s ease, box-shadow 0.3s ease;
@@ -920,7 +941,7 @@ input.text-style:hover {
        padding-top: 10px;
        text-align: center;
        font-family: 'Segoe UI', 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); 
+       text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.504); 
    }
    
    .success {
