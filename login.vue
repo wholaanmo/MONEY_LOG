@@ -151,6 +151,8 @@
     id: response.data.user.id,
     username: response.data.user.username, 
     email: response.data.user.email,
+    first_name: response.data.user.first_name, 
+  last_name: response.data.user.last_name,
     isFirstLogin: response.data.isFirstLogin
   }));
 
@@ -756,7 +758,7 @@ if (!/^\d{6}$/.test(otpString)) {
    .login-container {
     width: 100%;
     max-width: 650px;
-    min-width: 390px;
+    min-width: 320px;
     max-height: 600px;
     background: rgba(255, 255, 255, 0.92); /* Crisp white with slight transparency */
     border-radius: 20px;
@@ -860,7 +862,9 @@ input.text-style:hover {
    }
    
    .login-btn {
-    width: 200px;
+    width: 100%;
+    max-width: 300px;
+    min-width: 170px;
     background: linear-gradient(135deg, #a8d0c2, #62a293, #a8d0c2);
     border-radius: 20px;
     border: none;
@@ -911,6 +915,7 @@ input.text-style:hover {
   .deco-image {
       width: 100%;
       max-width: 300px;
+      min-width: 100px;
       height: auto;
       margin-top: 100px;
       filter: drop-shadow(0 10px 20px rgba(50, 120, 70, 0.15));
@@ -1022,14 +1027,15 @@ input.text-style:hover {
        .login-form,
        .login-deco-container {
            width: 50%;
+           padding: 10px;
        }
    
        .deco-image {
-           max-width: 220px;
+           max-width: 120px;
        }
    
        .penny {
-           font-size: 28px;
+           font-size: 25px;
        }
    
        .login-label {
@@ -1041,4 +1047,6 @@ input.text-style:hover {
            padding: 6px 0;
        }
    }
+
+
    </style>
