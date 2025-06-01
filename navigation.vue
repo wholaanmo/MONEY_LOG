@@ -28,6 +28,7 @@
             <li><router-link class="link" to="/GC"><i class="fas fa-user-friends"></i> GROUP</router-link></li>
             <li><router-link class="link" to="/view"><i class="fas fa-calendar-alt"></i> PERSONAL VIEW</router-link></li>
             <li><router-link class="link" to="/groupview"><i class="fas fa-chart-pie"></i> GROUP VIEW</router-link></li>  
+            <li><router-link class="link" to="/profile"><i class="fas fa-user-circle"></i> PROFILE</router-link></li>  
             <li class="logout-item">
               <button class="logout-btn" @click="showLogoutModal = true">
                 <i class="fas fa-sign-out-alt"></i> LOGOUT
@@ -193,6 +194,7 @@ header {
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
   text-align: center;
   max-width: 380px;
+  min-width: 180px;
   width: 90%;
   color: white;
   animation: popIn 0.4s ease-out;
@@ -425,6 +427,36 @@ i {
 }
 }
 
+.icon2 {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  text-decoration: none;
+  top: 0;
+  right: 90px;
+  height: 100%;
+  color: rgb(255, 255, 250);
+  cursor: pointer;
+  transition: 
+    color 0.3s ease, 
+    transform 0.3s ease, 
+    text-shadow 0.3s ease;
+}
+
+.icon2 i {
+  font-size: 24px;
+  transition: inherit;
+}
+
+.icon2:hover {
+  color: #ffffff;
+  transform: scale(1.05);
+  text-shadow: 
+    0 0 4px #ffffff,
+    0 0 6px #26665e;
+}
+
+
 .icon-active {
 transform: rotate(180deg);
 }
@@ -620,6 +652,12 @@ display: flex;
 justify-content: center;
 align-items: center;
 z-index: 1000;
+}
+
+@media (max-width: 480px) {
+  .modal-card.logout-modal {
+    width: 70%;
+  }
 }
 
 </style>
