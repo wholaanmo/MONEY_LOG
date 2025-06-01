@@ -55,6 +55,9 @@
                                     <i :class="showConfirmPassword ? 'fas fa-eye' : 'fas fa-eye-slash'"></i>
                                     </span>
                                 </div>
+                                <p class="password-hint">
+                                Password must contain uppercase or lowercase letter, number, and special character.
+                                </p>
     <div class="password-strength-meter">
         <div 
             :class="['strength-bar', strengthClass]" 
@@ -217,9 +220,7 @@
             <div class="modal-footer">
                 <button @click="showPrivacyModal = false" class="modal-close-btn">I Understand</button>
             </div>
-        </div>
-
-        
+        </div>       
     </div>
 </template>
 
@@ -520,6 +521,12 @@ const resendOTP = async () => {
 </script>
     
 <style scoped>
+.password-hint {
+    font-size: 0.85rem;
+    color: #555;
+    margin: 4px 0 8px 0;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
