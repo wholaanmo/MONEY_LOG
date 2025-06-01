@@ -11,6 +11,7 @@
         </button>
       </div>
       <div class="info">
+        <p><strong>Name: {{ fullName }}</strong></p>
         <p><strong>Username: {{ userName }}</strong></p>
         <p><strong>Email: {{ userEmail }}</strong></p>
       </div>
@@ -186,6 +187,7 @@ export default {
       filterMonth: '', 
       wasBudgetExceeded: false,
       showLogoutModal: false,
+      fullName: "",
       userEmail: "",
       userName: "",
       selectedYear: new Date().getFullYear().toString(),
@@ -759,7 +761,13 @@ updateExpenseView() {
     if (userData) {
         this.userEmail = userData.email;
         this.userName = userData.username;
+        if (userData.first_name && userData.last_name) {
+      this.fullName = `${userData.first_name} ${userData.last_name}`;
+    } else {
+      // Fallback to username if names aren't available
+      this.fullName = userData.username;
     }
+  }
     await this.loadAllGroupsData();
     
     // Only show welcome message if not already shown this session
@@ -781,8 +789,8 @@ updateExpenseView() {
   .account-deletion-container {
   width: 100%;
   max-width: 1200px;
-  margin: 10px auto;
-  padding: 0px 80px 20px 80px;
+  margin: 1px auto 20px auto;
+  padding: 0px 50px 20px 50px;
   justify-content: center;
   align-content: center;
   text-align: center;
@@ -812,13 +820,13 @@ updateExpenseView() {
   color: #b71c1c;
   font-size: 1rem;
   line-height: 1.5;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .btn-delete {
   background: #d32f2f;
   color: #fff;
-  padding: 12px 24px;
+  padding: 10px 24px;
   font-size: 1rem;
   border: none;
   border-radius: 8px;
@@ -946,7 +954,7 @@ updateExpenseView() {
   font-size: 1.8rem;
   margin-bottom: 1rem;
   font-weight: 700;
-  color: #4f7a6b;
+  color: #26665e;
 }
 
 .modal-card1.welcome-modal p {
@@ -957,7 +965,7 @@ updateExpenseView() {
 }
 
 .btn.confirm1 {
-  background: linear-gradient(135deg, #6a9c89, #4f7a6b);
+  background: linear-gradient(135deg, #86c9bd, #4f7a72);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -965,12 +973,13 @@ updateExpenseView() {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.256);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.379); 
   letter-spacing: 0.5px;
 }
 
 .btn.confirm1:hover {
-  background: linear-gradient(135deg, #8bbcae, #6a9c89);
+  background: linear-gradient(135deg, #78a6a3, #436e64);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
   transform: translateY(-2px);
 }
@@ -994,10 +1003,10 @@ updateExpenseView() {
 }
 
 .month-year-selector {
-  margin-bottom: 1rem;
+  margin-bottom: 10px;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 5px;
 }
 
 .year-selector {
@@ -1030,19 +1039,20 @@ updateExpenseView() {
 
 .month-buttons {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(6, 1fr); 
   grid-template-rows: repeat(2, auto);
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 0.5rem; 
+  margin-bottom: 0.5rem; 
 }
 
 .month-buttons button {
-  padding: 0.5rem 1rem;
   border: 2px solid #c5e0d5;
   border-radius: 6px;
   background: #feffff;
   color: #26665e;
   font-weight: 500;
+  padding: 0.5rem 0.5rem; 
+  font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -1059,14 +1069,15 @@ updateExpenseView() {
 }
 
 .summary-box {
-  background: linear-gradient(to right, #fdfffe, #f0fff9, #e6fff6);
-  border-radius: 16px;
-  padding: 1.5rem;  
-  box-shadow: 0 2px 6px #6a9c8957;
-  margin-bottom: 1.5rem;
-  border: 1px solid #e0f1e9;
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
-  backdrop-filter: blur(1px);
+    background: linear-gradient(to right, #fdfffe, #f0fff9, #e6fff6);
+    border-radius: 10px;            
+    padding: 1rem;                  
+    box-shadow: 0 1px 4px #6a9c8957;  
+    margin-bottom: 5px;            
+    border: 1px solid #e0f1e9;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    backdrop-filter: blur(1px);
+    font-size: 0.8rem;     
 }
 
 .summary-box:hover {
@@ -1078,8 +1089,8 @@ updateExpenseView() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
-  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.6rem;
+  padding: 0.3rem 0.6rem;
   color: #26665e;
   font-size: 1rem;
   font-weight: 500;
@@ -1137,12 +1148,13 @@ updateExpenseView() {
 .percentage.exceeded-text {
   color: #f44336;
   font-weight: bold;
-} /**NEWWWWWWWW */
+}
+
   .content-wrapper {
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  width: 85%;
+  padding: 10px;
+  width: 90%;
   margin: 0 auto;
 }
   
@@ -1151,7 +1163,7 @@ updateExpenseView() {
   padding: 15px;
   border-radius: 16px;
   box-shadow: 0 4px 16px #6a9c8966;
-  margin: 120px 10px 30px 20px;
+  margin: 110px 10px 30px 20px;
   position: relative;
   border-left: 4px solid #26665e;
   transition: box-shadow 0.3s ease, transform 0.3s ease;
@@ -1163,7 +1175,7 @@ updateExpenseView() {
 }
 
 .profile-container .info p {
-  margin: 12px 0;
+  margin: 10px 0;
   font-family: 'Poppins', sans-serif;
   font-size: 19px;
   font-style: italic;
@@ -1173,13 +1185,15 @@ updateExpenseView() {
 }
 .main-content {
   display: flex;
-  gap: 35px;
+  gap: 30px;
   padding: 0 20px;
   flex-wrap: wrap;
 }
 
 .personal-summary {
   flex: 2;
+  min-height: 450px;
+  max-height: 580px;
   background: #ffffff;
   padding: 30px 30px 15px 30px; /* top right bottom left */
   border-radius: 12px;
@@ -1196,6 +1210,7 @@ updateExpenseView() {
   .info strong {
   font-style: normal;
   color: #26665e;
+  font-size: 18px;
 }
 
 .infos {
@@ -1212,14 +1227,12 @@ updateExpenseView() {
 .group-summary {
   flex: 1;
   background: #ffffff;
-  padding: 30px;
+  padding: 25px;
   border-radius: 12px;
   box-shadow: 0 4px 10px #6a9c8941;
   border-left: 4px solid #26665e;
   transition: box-shadow 0.3s ease;
   height: 100%;
-  min-height: 410px;
-  max-height: 500px; 
 }
 
 .group-summary:hover {
@@ -1272,11 +1285,11 @@ updateExpenseView() {
 
 .section-title {
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   margin-top: 0px;
   font-family: "Poppins", sans-serif;
   font-weight: 600;
-  font-size:30px;
+  font-size:26px;
   text-align: center;
   color: #26665e;
   border-bottom: 2px solid #c4c4c4;
@@ -1289,7 +1302,7 @@ updateExpenseView() {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   font-family: "Poppins", sans-serif;
 }
 
@@ -1313,7 +1326,7 @@ updateExpenseView() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   border-bottom: 2px solid #c4c4c4;  
   padding-bottom: 5px;
   position: relative;
@@ -1374,7 +1387,7 @@ updateExpenseView() {
 }
 
 .modal-card.logout-modal {
-  background: linear-gradient(135deg, #a6e7d9, #589486);
+  background: linear-gradient(135deg, #a4e3c7, hsl(172, 31%, 53%));
   padding: 0.8rem 2rem 2rem 2rem; /* top right bottom left */
   border-radius: 1.25rem;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
@@ -1390,6 +1403,7 @@ updateExpenseView() {
   font-size: 1.6rem;
   margin-bottom: 0.75rem;
   font-weight: 700;
+  text-shadow: 2px 3px 6px #33333375;
   display: flex;
   justify-content: center;
   align-items: center;
