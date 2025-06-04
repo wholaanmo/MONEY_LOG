@@ -7271,5 +7271,15 @@ button.cancel-button{
   .confirmation-modal {
     width: 80%;
   }
+  .request-item {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .request-actions{
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    gap: 5px;
+  }
 }
 </style>
