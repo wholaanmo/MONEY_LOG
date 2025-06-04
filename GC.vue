@@ -69,17 +69,24 @@
           </div>
         </div>
       </div>
-  <div class="notifications-container" v-if="notifications.length > 0">
+  <!-- Toggle Button -->
+  <button class="notifications-toggle" @click="isSidebarOpen = !isSidebarOpen">
+  <i class="fas fa-bell"></i>
+  <span v-if="notifications.length > 0" class="notification-badge">{{ notifications.length }}</span>
+</button>
+
+<!-- Sidebar Notification Panel -->
+<div class="notifications-sidebar" :class="{ open: isSidebarOpen }">
   <h3 class="notifications-title">
     <i class="fas fa-bell"></i> Notifications
   </h3>
-  <div class="notification-list">
+  <div class="notification-list" v-if="notifications.length > 0">
     <div v-for="(notification, index) in notifications" :key="index" 
          class="notification-item" :class="notification.type">
       <div class="notification-header">
         <i class="fas" :class="{
           'fa-ban': notification.type === 'blocked',
-          'fa-user-minus': notification.type === 'removed'
+          'fas fa-user': notification.type === 'removed'
         }"></i>
         <span class="notification-type">
           {{ notification.type === 'blocked' ? 'Blocked' : 'Removed' }}
@@ -106,6 +113,10 @@
       </div>
     </div>
   </div>
+  <div v-else class="no-notifications">
+    <i class="fas fa-bell-slash"></i>
+    <p>No notifications</p>
+  </div>
 </div>
 </div>
 </div>
@@ -128,7 +139,8 @@
         error: '',
         isLoading: false,
         forceShow: false,
-        preventAutoRedirect: false 
+        preventAutoRedirect: false,
+        isSidebarOpen: false
        };
      },
  
@@ -144,6 +156,9 @@
     },
    
      methods: {
+     dismissNotification(index) {
+      this.notifications.splice(index, 1);
+    },
       async fetchNotifications() {
         try {
           const response = await this.$axios.get('/api/grp_expenses/user-notifications', {
@@ -422,16 +437,97 @@
    </script>
    
    <style scoped>
-   .notifications-container {
-  margin-top: 2rem;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  padding: 1.5rem;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+   .no-notifications {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280; /* Tailwind's gray-500 */
+  padding: 1rem;
+  border: 1px solid #e5e7eb; /* Tailwind's gray-200 */
+  border-radius: 0.5rem;
+  background-color: #f9fafb; /* Tailwind's gray-50 */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  text-align: center;
 }
+
+.no-notifications i {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.no-notifications p {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.notifications-toggle {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: #41725f;
+  color: #fff;
+  border: none;
+  padding: 1rem;
+  font-size: 1.3rem; 
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: red;
+  color: white;
+  font-size: 0.75rem;
+  border-radius: 50%;
+  padding: 2px 6px;
+}
+
+.notifications-sidebar {
+  position: fixed;
+  top: 0;
+  right: -500px;
+  width: 250px;
+  height: 100vh;
+  background: #fff;
+  border-left: 1px solid #ccc;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+  overflow-y: auto;
+  padding: 1.5rem;
+  transition: right 0.3s ease;
+  z-index: 1000;
+}
+
+.notifications-sidebar.open {
+  right: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  float: right;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.notification-item {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+.notification-item.blocked {
+  border-left: 4px solid red;
+}
+
+.notification-item.removed {
+  border-left: 4px solid orange;
+}
+
 
 .notifications-title {
   color: #333;
@@ -445,7 +541,8 @@
 .notification-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.2rem;
+  margin-bottom: 25px;
 }
 
 .notification-item {
@@ -839,5 +936,4 @@
      }
    }
    </style>
-      
       
